@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository }}-api-server
 
 jobs:
   build-and-push:
@@ -42,7 +42,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=sha,prefix={{date '20060102'}}-
+            type=sha,prefix={{date 'YYYYMMDD'}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push
