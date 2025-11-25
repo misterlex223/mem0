@@ -30,8 +30,76 @@ MEMGRAPH_URI = os.environ.get("MEMGRAPH_URI", "bolt://localhost:7687")
 MEMGRAPH_USERNAME = os.environ.get("MEMGRAPH_USERNAME", "memgraph")
 MEMGRAPH_PASSWORD = os.environ.get("MEMGRAPH_PASSWORD", "mem0graph")
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+# LLM Configuration
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "openai")
+AI_API_KEY = os.environ.get("AI_API_KEY")
+
+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1-nano-2025-04-14")
+ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-3-sonnet-20240229")
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama3-70b-8192")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.1")
+
+LLM_TEMPERATURE = float(os.environ.get("LLM_TEMPERATURE", "0.2"))
+LLM_BASE_URL = os.environ.get("LLM_BASE_URL")
+OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+
+# Embedder Configuration
+EMBEDDER_PROVIDER = os.environ.get("EMBEDDER_PROVIDER", "openai")
+EMBEDDER_API_KEY = os.environ.get("EMBEDDER_API_KEY", AI_API_KEY)  # Default to AI_API_KEY if not set
+
+EMBEDDER_MODEL = os.environ.get("EMBEDDER_MODEL", "text-embedding-3-small")
+OLLAMA_EMBEDDER_MODEL = os.environ.get("OLLAMA_EMBEDDER_MODEL", "nomic-embed-text")
+
 HISTORY_DB_PATH = os.environ.get("HISTORY_DB_PATH", "/app/history/history.db")
+
+
+def build_llm_config():
+    """Build LLM configuration based on environment variables."""
+    config = {
+        "provider": LLM_PROVIDER,
+        "config": {
+            "api_key": AI_API_KEY,
+            "temperature": LLM_TEMPERATURE,
+            "model": (
+                OPENAI_MODEL if LLM_PROVIDER == "openai" else
+                ANTHROPIC_MODEL if LLM_PROVIDER == "anthropic" else
+                GROQ_MODEL if LLM_PROVIDER == "groq" else
+                OLLAMA_MODEL if LLM_PROVIDER == "ollama" else
+                "gpt-4.1-nano-2025-04-14"
+            )
+        }
+    }
+
+    # Add base_url if specified and not empty
+    if LLM_BASE_URL:
+        config["config"]["base_url"] = LLM_BASE_URL
+    elif LLM_PROVIDER == "ollama":
+        config["config"]["base_url"] = OLLAMA_BASE_URL
+
+    return config
+
+
+def build_embedder_config():
+    """Build embedder configuration based on environment variables."""
+    config = {
+        "provider": EMBEDDER_PROVIDER,
+        "config": {
+            "api_key": EMBEDDER_API_KEY,
+            "model": (
+                EMBEDDER_MODEL if EMBEDDER_PROVIDER == "openai" else
+                EMBEDDER_MODEL if EMBEDDER_PROVIDER == "anthropic" else
+                OLLAMA_EMBEDDER_MODEL if EMBEDDER_PROVIDER == "ollama" else
+                "text-embedding-3-small"
+            )
+        }
+    }
+
+    # Add base_url for ollama embedder if needed
+    if EMBEDDER_PROVIDER == "ollama" and OLLAMA_BASE_URL:
+        config["config"]["base_url"] = OLLAMA_BASE_URL
+
+    return config
+
 
 DEFAULT_CONFIG = {
     "version": "v1.1",
@@ -50,8 +118,8 @@ DEFAULT_CONFIG = {
         "provider": "neo4j",
         "config": {"url": NEO4J_URI, "username": NEO4J_USERNAME, "password": NEO4J_PASSWORD},
     },
-    "llm": {"provider": "openai", "config": {"api_key": OPENAI_API_KEY, "temperature": 0.2, "model": "gpt-4.1-nano-2025-04-14"}},
-    "embedder": {"provider": "openai", "config": {"api_key": OPENAI_API_KEY, "model": "text-embedding-3-small"}},
+    **build_llm_config(),
+    **build_embedder_config(),
     "history_db_path": HISTORY_DB_PATH,
 }
 
