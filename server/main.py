@@ -45,7 +45,8 @@ OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 
 # Embedder Configuration
 EMBEDDER_PROVIDER = os.environ.get("EMBEDDER_PROVIDER", "openai")
-EMBEDDER_API_KEY = os.environ.get("EMBEDDER_API_KEY", AI_API_KEY)  # Default to AI_API_KEY if not set
+# Default to AI_API_KEY if not set
+EMBEDDER_API_KEY = os.environ.get("EMBEDDER_API_KEY", AI_API_KEY)
 
 EMBEDDER_MODEL = os.environ.get("EMBEDDER_MODEL", "text-embedding-3-small")
 OLLAMA_EMBEDDER_MODEL = os.environ.get("OLLAMA_EMBEDDER_MODEL", "nomic-embed-text")
@@ -72,9 +73,9 @@ def build_llm_config():
 
     # Add base_url if specified and not empty
     if LLM_BASE_URL:
-        config["config"]["base_url"] = LLM_BASE_URL
+        config["base_url"] = LLM_BASE_URL
     elif LLM_PROVIDER == "ollama":
-        config["config"]["base_url"] = OLLAMA_BASE_URL
+        config["base_url"] = OLLAMA_BASE_URL
 
     return config
 
@@ -96,7 +97,7 @@ def build_embedder_config():
 
     # Add base_url for ollama embedder if needed
     if EMBEDDER_PROVIDER == "ollama" and OLLAMA_BASE_URL:
-        config["config"]["base_url"] = OLLAMA_BASE_URL
+        config["base_url"] = OLLAMA_BASE_URL
 
     return config
 
@@ -118,13 +119,15 @@ DEFAULT_CONFIG = {
         "provider": "neo4j",
         "config": {"url": NEO4J_URI, "username": NEO4J_USERNAME, "password": NEO4J_PASSWORD},
     },
-    **build_llm_config(),
-    **build_embedder_config(),
+    "llm": build_llm_config(),
+    "embedder": build_embedder_config(),
     "history_db_path": HISTORY_DB_PATH,
 }
 
 
+print('Default Config => ', DEFAULT_CONFIG)
 MEMORY_INSTANCE = Memory.from_config(DEFAULT_CONFIG)
+
 
 app = FastAPI(
     title="Mem0 REST APIs",
