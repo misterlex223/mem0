@@ -37,7 +37,7 @@ AI_API_KEY = os.environ.get("AI_API_KEY")
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1-nano-2025-04-14")
 ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-3-sonnet-20240229")
 GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama3-70b-8192")
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.1")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.1:latest")
 
 LLM_TEMPERATURE = float(os.environ.get("LLM_TEMPERATURE", "0.2"))
 LLM_BASE_URL = os.environ.get("LLM_BASE_URL")
@@ -49,7 +49,7 @@ EMBEDDER_PROVIDER = os.environ.get("EMBEDDER_PROVIDER", "openai")
 EMBEDDER_API_KEY = os.environ.get("EMBEDDER_API_KEY", AI_API_KEY)
 
 EMBEDDER_MODEL = os.environ.get("EMBEDDER_MODEL", "text-embedding-3-small")
-OLLAMA_EMBEDDER_MODEL = os.environ.get("OLLAMA_EMBEDDER_MODEL", "nomic-embed-text")
+OLLAMA_EMBEDDER_MODEL = os.environ.get("OLLAMA_EMBEDDER_MODEL", "nomic-embed-text:latest")
 
 HISTORY_DB_PATH = os.environ.get("HISTORY_DB_PATH", "/app/history/history.db")
 
@@ -75,7 +75,7 @@ def build_llm_config():
     if LLM_BASE_URL:
         config["base_url"] = LLM_BASE_URL
     elif LLM_PROVIDER == "ollama":
-        config["base_url"] = OLLAMA_BASE_URL
+        config["config"]["ollama_base_url"] = OLLAMA_BASE_URL
 
     return config
 
@@ -90,14 +90,14 @@ def build_embedder_config():
                 EMBEDDER_MODEL if EMBEDDER_PROVIDER == "openai" else
                 EMBEDDER_MODEL if EMBEDDER_PROVIDER == "anthropic" else
                 OLLAMA_EMBEDDER_MODEL if EMBEDDER_PROVIDER == "ollama" else
-                "text-embedding-3-small"
+                "text-embedding-3-small:latest"
             )
         }
     }
 
     # Add base_url for ollama embedder if needed
     if EMBEDDER_PROVIDER == "ollama" and OLLAMA_BASE_URL:
-        config["base_url"] = OLLAMA_BASE_URL
+        config["config"]["ollama_base_url"] = OLLAMA_BASE_URL
 
     return config
 
@@ -125,7 +125,7 @@ DEFAULT_CONFIG = {
 }
 
 
-print('Default Config => ', DEFAULT_CONFIG)
+print("Default Config => ", DEFAULT_CONFIG)
 MEMORY_INSTANCE = Memory.from_config(DEFAULT_CONFIG)
 
 
@@ -223,11 +223,11 @@ def search_memories(search_req: SearchRequest):
 @app.put("/memories/{memory_id}", summary="Update a memory")
 def update_memory(memory_id: str, updated_memory: Dict[str, Any]):
     """Update an existing memory with new content.
-    
+
     Args:
         memory_id (str): ID of the memory to update
         updated_memory (str): New content to update the memory with
-        
+
     Returns:
         dict: Success message indicating the memory was updated
     """
